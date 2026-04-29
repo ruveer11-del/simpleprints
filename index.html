@@ -3,510 +3,960 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simple Prints - 3D Printed Store</title>
+  <title>Forg3d Prints - Custom 3D Printed Products</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <style>
-    :root { --primary: #1e3c72; --primary-light: #2a5298; --success: #22c55e; --text: #1f2937; --text-light: #6b7280; --bg: #f8fafc; --card-bg: #ffffff; --border: #e5e7eb; --shadow: 0 2px 8px rgba(0,0,0,0.08); --radius: 12px; }
+    :root {
+      --black: #111111;
+      --orange-red: #ff5722;
+      --orange-light: #ff7043;
+      --green: #22c55e;
+      --green-dark: #16a34a;
+      --text: #1f2937;
+      --text-light: #6b7280;
+      --bg: #f5f5f5;
+      --card-bg: #ffffff;
+      --border: #e5e7eb;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+      --radius: 12px;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-    header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); padding: 12px 24px; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-    .logo-btn { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-    .logo-btn img { width: 40px; height: 40px; border-radius: 10px; }
-    .logo-btn span { color: white; font-size: 1.3rem; font-weight: 700; }
-    .search-box { flex: 1; max-width: 350px; }
-    .search-box input { width: 100%; padding: 10px 16px; border: none; border-radius: 25px; font-size: 0.9rem; outline: none; }
+
+    /* Header */
+    header { background: var(--black); padding: 12px 24px; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .logo-btn { display: flex; align-items: center; gap: 10px; cursor: pointer; background: none; border: none; }
+    .logo-btn span { color: var(--orange-red); font-size: 1.4rem; font-weight: 700; letter-spacing: -0.5px; }
+    .search-box { flex: 1; max-width: 400px; }
+    .search-box input { width: 100%; padding: 10px 16px; border: none; border-radius: 25px; font-size: 0.9rem; outline: none; background: #222; color: white; }
+    .search-box input::placeholder { color: #888; }
     .header-buttons { display: flex; gap: 10px; align-items: center; }
-    .cart-button { position: relative; padding: 10px 16px; border: none; border-radius: 25px; background: rgba(255,255,255,0.2); color: white; font-size: 0.9rem; cursor: pointer; }
-    .cart-badge { position: absolute; top: -4px; right: -4px; background: #ef4444; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; }
+    .cart-button { position: relative; padding: 10px 16px; border: none; border-radius: 25px; background: var(--green); color: white; font-size: 0.9rem; cursor: pointer; font-weight: 600; }
+    .cart-button:hover { background: var(--green-dark); }
+    .cart-badge { position: absolute; top: -6px; right: -6px; background: var(--orange-red); color: white; font-size: 0.7rem; padding: 2px 7px; border-radius: 10px; font-weight: 700; }
     .user-menu { position: relative; }
-    .user-button { padding: 10px 14px; border: none; border-radius: 25px; background: rgba(255,255,255,0.2); color: white; font-weight: 600; cursor: pointer; }
-    .user-dropdown { position: absolute; top: 100%; right: 0; margin-top: 8px; background: white; border-radius: var(--radius); box-shadow: 0 4px 20px rgba(0,0,0,0.15); display: none; min-width: 180px; z-index: 200; }
+    .user-button { padding: 10px 14px; border: none; border-radius: 25px; background: #222; color: white; font-weight: 600; cursor: pointer; }
+    .user-dropdown { position: absolute; top: 100%; right: 0; margin-top: 8px; background: white; border-radius: var(--radius); box-shadow: 0 4px 20px rgba(0,0,0,0.15); display: none; min-width: 200px; z-index: 200; }
     .user-dropdown.show { display: block; }
-    .user-dropdown button { width: 100%; padding: 12px 16px; border: none; background: none; text-align: left; font-size: 0.9rem; cursor: pointer; }
+    .user-dropdown button { width: 100%; padding: 12px 16px; border: none; background: none; text-align: left; font-size: 0.9rem; cursor: pointer; color: var(--text); }
     .user-dropdown button:hover { background: #f3f4f6; }
     .user-dropdown .divider { border-top: 1px solid var(--border); }
-    .user-dropdown .admin-btn { color: var(--primary); font-weight: 600; }
+    .user-dropdown .admin-btn { color: var(--orange-red); font-weight: 600; }
+
+    /* Navigation */
     .navbar { background: white; box-shadow: var(--shadow); padding: 0 24px; overflow-x: auto; }
     .nav-links { display: flex; gap: 8px; max-width: 1400px; margin: 0 auto; padding: 12px 0; }
-    .nav-btn { padding: 10px 18px; border: none; border-radius: 25px; background: transparent; font-size: 0.9rem; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
-    .nav-btn:hover, .nav-btn.active { background: var(--primary); color: white; }
+    .nav-btn { padding: 10px 18px; border: none; border-radius: 25px; background: transparent; font-size: 0.9rem; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.2s; color: var(--text); }
+    .nav-btn:hover { background: #f3f4f6; }
+    .nav-btn.active { background: var(--black); color: white; }
+
+    /* Container */
     .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
-    .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-    .product-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; transition: all 0.25s; cursor: pointer; }
+
+    /* Section */
+    .section { margin-bottom: 40px; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .section-title { font-size: 1.3rem; font-weight: 700; color: var(--black); }
+    .view-all { font-size: 0.85rem; color: var(--orange-red); cursor: pointer; font-weight: 500; }
+    .products-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+
+    /* Product Card */
+    .product-card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; transition: all 0.25s; cursor: pointer; position: relative; }
     .product-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
-    .product-image { height: 140px; display: flex; align-items: center; justify-content: center; background: #f5f7fa; }
-    .product-image img { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+    .fav-btn { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; border: none; background: rgba(255,255,255,0.9); cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; z-index: 10; transition: all 0.2s; }
+    .fav-btn:hover { transform: scale(1.1); }
+    .fav-btn.favorited { color: #ef4444; }
+    .product-image { height: 160px; display: flex; align-items: center; justify-content: center; background: #fafafa; padding: 12px; }
+    .product-image img { width: 100%; height: 100%; object-fit: contain; }
     .product-info { padding: 14px; }
     .product-name { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
-    .product-desc { font-size: 0.8rem; color: var(--text-light); margin-bottom: 8px; }
-    .product-price { font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: 10px; }
-    .add-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--primary); color: white; font-weight: 600; cursor: pointer; }
-    .add-btn:hover { background: var(--primary-light); }
+    .product-desc { font-size: 0.8rem; color: var(--text-light); margin-bottom: 8px; line-height: 1.3; }
+    .product-price { font-size: 1.1rem; font-weight: 700; color: var(--orange-red); margin-bottom: 10px; }
+    .add-btn { width: 100%; padding: 10px; border: none; border-radius: 8px; background: var(--black); color: white; font-weight: 600; cursor: pointer; font-size: 0.85rem; }
+    .add-btn:hover { background: #333; }
     .product-badges { display: flex; gap: 4px; margin-bottom: 6px; flex-wrap: wrap; }
-    .badge { font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; }
+    .badge { font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; font-weight: 500; }
     .badge.fire { background: #ff6b6b; color: white; }
     .badge.worker { background: #ff69b4; color: white; }
-    .badge.deal { background: #ffd700; color: #333; font-weight: bold; }
-    .badge.art { background: #8b5cf6; color: white; }
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .badge.deal { background: #fbbf24; color: black; }
+
+    /* Full Screen Product Modal */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
     .modal-overlay.open { display: flex; }
-    .modal-box { background: white; border-radius: var(--radius); max-width: 500px; width: 100%; max-height: 80vh; overflow-y: auto; position: relative; animation: slideUp 0.3s ease; }
-    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .modal-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-    .modal-header h2 { font-size: 1.3rem; }
+    .modal-content { background: white; border-radius: var(--radius); max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .modal-header h2 { font-size: 1.2rem; }
     .close-btn { width: 32px; height: 32px; border: none; background: #f3f4f6; border-radius: 50%; cursor: pointer; font-size: 1rem; }
     .modal-body { padding: 20px; }
-    .cart-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); align-items: center; }
+    .modal-image { width: 100%; height: 300px; object-fit: contain; background: #fafafa; border-radius: 8px; margin-bottom: 16px; }
+    .modal-price { font-size: 1.5rem; font-weight: 700; color: var(--orange-red); margin-bottom: 12px; }
+    .modal-desc { color: var(--text-light); margin-bottom: 16px; line-height: 1.5; }
+    .size-selector { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .size-btn { padding: 8px 16px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-weight: 500; }
+    .size-btn.active { border-color: var(--orange-red); background: var(--orange-red); color: white; }
+    .articulated-toggle { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .qty-selector { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .qty-btn { width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--black); color: white; cursor: pointer; font-size: 1rem; }
+    .qty-val { font-size: 1.1rem; font-weight: 600; min-width: 30px; text-align: center; }
+    .add-cart-btn { width: 100%; padding: 14px; border: none; border-radius: 8px; background: var(--green); color: white; font-weight: 600; cursor: pointer; font-size: 1rem; }
+    .add-cart-btn:hover { background: var(--green-dark); }
+
+    /* Cart Modal */
+    #cartModal .modal-content { max-width: 500px; }
+    .cart-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .cart-item-emoji { font-size: 2rem; }
     .cart-item-info { flex: 1; }
-    .cart-item-name { font-weight: 600; margin-bottom: 4px; }
+    .cart-item-name { font-weight: 600; font-size: 0.9rem; }
     .cart-item-size { font-size: 0.8rem; color: var(--text-light); }
     .cart-item-qty { display: flex; align-items: center; gap: 8px; }
-    .qty-btn { width: 28px; height: 28px; border: 1px solid var(--border); background: white; border-radius: 6px; cursor: pointer; }
-    .cart-total { padding: 16px 0; font-size: 1.2rem; font-weight: 700; display: flex; justify-content: space-between; }
-    .checkout-btn { width: 100%; padding: 16px; border: none; border-radius: var(--radius); background: var(--primary); color: white; font-size: 1rem; font-weight: 600; cursor: pointer; }
-    .product-detail-box { max-width: 900px; }
-    @media(min-width: 700px) { .product-detail-layout { display: flex; } }
-    .product-detail-left { flex: 1; background: #f5f7fa; display: flex; align-items: center; justify-content: center; padding: 30px; }
-    .product-detail-left img { max-width: 100%; max-height: 250px; object-fit: contain; }
-    .product-detail-right { flex: 1; padding: 24px; overflow-y: auto; }
-    .product-detail-right h2 { font-size: 1.6rem; margin-bottom: 8px; }
-    .product-detail-price { font-size: 1.6rem; font-weight: 700; color: var(--primary); margin-bottom: 12px; }
-    .product-detail-desc { color: var(--text-light); line-height: 1.6; margin-bottom: 16px; }
-    .size-selector { margin-bottom: 16px; }
-    .size-selector label { font-weight: 600; display: block; margin-bottom: 8px; }
-    .size-options { display: flex; flex-wrap: wrap; gap: 8px; }
-    .size-btn { padding: 10px 16px; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-size: 0.85rem; }
-    .size-btn.active { border-color: var(--primary); background: var(--primary); color: white; }
-    .art-toggle { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding: 12px; background: #f3f4f6; border-radius: 8px; }
-    .art-toggle input { width: 18px; height: 18px; }
-    .art-toggle label { font-weight: 500; }
-    .qty-selector { display: flex; align-items: center; gap: 0; border: 2px solid var(--border); border-radius: 8px; overflow: hidden; width: fit-content; margin-bottom: 20px; }
-    .qty-selector button { width: 40px; height: 40px; border: none; background: #f3f4f6; cursor: pointer; font-size: 1.2rem; }
-    .qty-selector span { width: 50px; text-align: center; font-weight: 700; }
-    .ai-section { background: #f8f9fa; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
-    .ai-section h3 { font-size: 1rem; color: var(--primary); margin-bottom: 8px; }
-    .ai-content { font-size: 0.9rem; line-height: 1.6; color: var(--text); }
-    .rvgpt-sidebar { position: fixed; right: -380px; top: 0; bottom: 0; width: 380px; background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%); z-index: 2000; transition: right 0.3s; display: flex; flex-direction: column; }
-    .rvgpt-sidebar.open { right: 0; }
-    .rvgpt-header { padding: 16px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .rvgpt-header img { width: 36px; height: 36px; border-radius: 10px; }
-    .rvgpt-header h3 { color: white; font-size: 1.2rem; flex: 1; }
-    .rvgpt-close { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; padding: 8px; }
-    .rvgpt-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-    .rvgpt-msg { display: flex; gap: 10px; }
-    .rvgpt-msg.user { flex-direction: row-reverse; }
-    .rvgpt-avatar { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; }
-    .rvgpt-msg.bot .rvgpt-avatar { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; }
-    .rvgpt-msg.user .rvgpt-avatar { background: #2d2d44; color: white; }
-    .rvgpt-content { max-width: 75%; padding: 12px 14px; border-radius: 14px; font-size: 0.9rem; line-height: 1.5; }
-    .rvgpt-msg.bot .rvgpt-content { background: #252538; color: white; border-bottom-left-radius: 4px; }
-    .rvgpt-msg.user .rvgpt-content { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; border-bottom-right-radius: 4px; }
-    .rvgpt-input { padding: 16px; display: flex; gap: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
-    .rvgpt-input input { flex: 1; padding: 12px 16px; background: #1e1e32; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; outline: none; }
-    .rvgpt-input input::placeholder { color: #888; }
-    .rvgpt-input button { padding: 12px 20px; border: none; border-radius: 10px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; cursor: pointer; font-weight: 600; }
-    .rvgpt-toggle { position: fixed; right: 20px; bottom: 20px; width: 60px; height: 60px; border: none; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-light)); cursor: pointer; box-shadow: 0 4px 20px rgba(30,60,114,0.4); z-index: 1999; display: flex; align-items: center; justify-content: center; }
-    .rvgpt-toggle img { width: 36px; height: 36px; border-radius: 10px; }
-    .admin-panel { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 3000; display: none; flex-direction: column; }
-    .admin-panel.show { display: flex; }
-    .admin-header { padding: 16px 24px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; display: flex; justify-content: space-between; align-items: center; }
-    .admin-header h1 { font-size: 1.4rem; }
-    .admin-close { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
-    .admin-content { flex: 1; overflow-y: auto; padding: 24px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1400px; margin: 0 auto; width: 100%; }
-    .admin-section { background: white; border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
-    .admin-section h2 { font-size: 1.1rem; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
-    .order-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
-    .order-item:last-child { border-bottom: none; }
-    .order-id { font-weight: 600; }
-    .order-status { font-size: 0.85rem; padding: 4px 10px; border-radius: 20px; }
-    .order-status.pending { background: #fef3c7; color: #92400e; }
-    .order-status.ready { background: #dbeafe; color: #1e40af; }
-    .order-status.picked { background: #d1fae5; color: #065f46; }
-    .tracker-input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 12px; }
-    .tracker-btn { padding: 12px 20px; border: none; border-radius: 8px; background: var(--primary); color: white; cursor: pointer; width: 100%; }
+    .cart-total { font-size: 1.3rem; font-weight: 700; text-align: center; margin: 16px 0; }
+    .checkout-btn { width: 100%; padding: 14px; border: none; border-radius: 8px; background: var(--green); color: white; font-weight: 600; cursor: pointer; font-size: 1rem; }
+    .empty-cart { text-align: center; padding: 40px; color: var(--text-light); }
+
+    /* Auth Modal */
+    #authModal .modal-content { max-width: 400px; }
+    .auth-option { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid var(--border); border-radius: 8px; background: white; cursor: pointer; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .auth-option:hover { border-color: var(--orange-red); }
+    .email-input { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 0.9rem; margin-bottom: 12px; }
+    .submit-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--orange-red); color: white; font-weight: 600; cursor: pointer; }
+
+    /* Favorites Page */
+    #favoritesPage { display: none; }
+    #favoritesPage.show { display: block; }
+    #mainContent.hide { display: none; }
+
+    /* Custom Print Modal */
+    #customPrintModal .modal-content { max-width: 500px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 6px; }
+    .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 2px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.9rem; }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+
+    /* Admin Panel */
+    #adminModal .modal-content { max-width: 600px; }
+    .admin-section { margin-bottom: 20px; }
+    .admin-section h3 { font-size: 1rem; margin-bottom: 10px; color: var(--orange-red); }
+    .order-item { padding: 12px; background: #f9fafb; border-radius: 8px; margin-bottom: 8px; }
+    .status-btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.8rem; margin: 2px; }
+    .status-btn.pending { background: #fbbf24; }
+    .status-btn.ready { background: var(--green); color: white; }
+    .status-btn.picked { background: #3b82f6; color: white; }
+    .admin-login { padding: 20px; }
+    .admin-login input { width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; margin-bottom: 12px; font-size: 0.9rem; }
+
+    /* RVGPT Sidebar */
+    .rvgpt-btn { position: fixed; bottom: 24px; right: 24px; width: 60px; height: 60px; border-radius: 50%; border: none; background: var(--orange-red); color: white; cursor: pointer; box-shadow: 0 4px 12px rgba(255,87,34,0.4); z-index: 50; display: flex; align-items: center; justify-content: center; }
+    .rvgpt-btn img { width: 36px; height: 36px; border-radius: 50%; }
+    .rvgpt-sidebar { position: fixed; bottom: 90px; right: 24px; width: 350px; max-height: 500px; background: white; border-radius: var(--radius); box-shadow: 0 8px 30px rgba(0,0,0,0.15); z-index: 50; display: none; flex-direction: column; }
+    .rvgpt-sidebar.open { display: flex; }
+    .rvgpt-header { background: var(--black); color: white; padding: 14px 16px; border-radius: var(--radius) var(--radius) 0 0; display: flex; align-items: center; gap: 10px; }
+    .rvgpt-header img { width: 28px; height: 28px; border-radius: 50%; }
+    .rvgpt-messages { flex: 1; overflow-y: auto; padding: 16px; max-height: 350px; }
+    .rvgpt-msg { margin-bottom: 10px; padding: 10px 14px; border-radius: 12px; font-size: 0.85rem; line-height: 1.4; }
+    .rvgpt-msg.bot { background: #f3f4f6; }
+    .rvgpt-msg.user { background: var(--orange-red); color: white; margin-left: 20px; }
+    .rvgpt-input { display: flex; padding: 12px; border-top: 1px solid var(--border); }
+    .rvgpt-input input { flex: 1; padding: 10px; border: 2px solid var(--border); border-radius: 8px 0 0 8px; outline: none; }
+    .rvgpt-input button { padding: 10px 16px; border: none; background: var(--orange-red); color: white; border-radius: 0 8px 8px 0; cursor: pointer; }
+
+    @media (max-width: 768px) {
+      .products-row { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+      .section-title { font-size: 1.1rem; }
+      .rvgpt-sidebar { width: calc(100% - 48px); }
+    }
   </style>
 </head>
 <body>
-<header>
-  <div class="logo-btn" onclick="goHome()">
-    <img src="RV.png" alt="Logo">
-    <span>Simple Prints</span>
-  </div>
-  <div class="search-box"><input type="text" id="searchInput" placeholder="Search products..." oninput="searchProducts(this.value)"></div>
-  <div class="header-buttons">
-    <button class="cart-button" onclick="toggleCart()">🛒 <span class="cart-badge" id="cartBadge">0</span></button>
-    <div class="user-menu">
-      <button class="user-button" id="userButton" onclick="toggleUserMenu()">Login</button>
-      <div class="user-dropdown" id="userDropdown">
-        <button onclick="showLoginModal()">Sign In</button>
-        <button onclick="logout()" id="logoutBtn" style="display:none">Sign Out</button>
-        <div class="divider"></div>
-        <button onclick="showOrdersModal()" id="myOrdersBtn" style="display:none">My Orders</button>
-        <button onclick="showAdminPanel()" id="adminBtn" class="admin-btn" style="display:none">Admin Panel</button>
-      </div>
+
+  <!-- Header -->
+  <header>
+    <button class="logo-btn" onclick="showSection('all')">
+      <span>Forg3d Prints</span>
+    </button>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search products..." oninput="handleSearch(this.value)">
     </div>
-  </div>
-</header>
-<nav class="navbar">
-  <div class="nav-links">
-    <button class="nav-btn active" data-category="featured" onclick="filterCategory('featured')">Featured</button>
-    <button class="nav-btn" data-category="all" onclick="filterCategory('all')">All</button>
-    <button class="nav-btn" data-category="animals" onclick="filterCategory('animals')">Animals</button>
-    <button class="nav-btn" data-category="fidgets" onclick="filterCategory('fidgets')">Fidgets</button>
-    <button class="nav-btn" data-category="figures" onclick="filterCategory('figures')">Figures</button>
-    <button class="nav-btn" data-category="vehicles" onclick="filterCategory('vehicles')">Vehicles</button>
-    <button class="nav-btn" data-category="accessories" onclick="filterCategory('accessories')">Accessories</button>
-  </div>
-</nav>
-<div class="container"><div class="products-grid" id="productsGrid"></div></div>
-<div class="modal-overlay" id="cartModal" onclick="closeModal(event)">
-  <div class="modal-box" onclick="event.stopPropagation()">
-    <div class="modal-header"><h2>Your Cart</h2><button class="close-btn" onclick="closeCart()">X</button></div>
-    <div class="modal-body" id="cartItems"></div>
-    <div class="modal-body">
-      <div class="cart-total"><span>Total</span><span id="cartTotal">$0</span></div>
-      <button class="checkout-btn" onclick="checkout()">Checkout (Cash on Pickup)</button>
-    </div>
-  </div>
-</div>
-<div class="modal-overlay" id="loginModal" onclick="closeModal(event)">
-  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:400px">
-    <div class="modal-header"><h2>Sign In</h2><button class="close-btn" onclick="closeLoginModal()">X</button></div>
-    <div class="modal-body">
-      <button class="checkout-btn" onclick="signInWithGoogle()" style="margin-bottom:12px">Sign in with Google</button>
-      <button class="checkout-btn" onclick="signInEmail()" style="background:var(--primary)">Sign in with Email</button>
-    </div>
-  </div>
-</div>
-<div class="modal-overlay" id="ordersModal" onclick="closeModal(event)">
-  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:500px">
-    <div class="modal-header"><h2>My Orders</h2><button class="close-btn" onclick="closeOrdersModal()">X</button></div>
-    <div class="modal-body" id="ordersList"></div>
-  </div>
-</div>
-<div class="modal-overlay" id="productModal" onclick="closeModal(event)">
-  <div class="modal-box product-detail-box" onclick="event.stopPropagation()">
-    <button class="close-btn" style="position:absolute;top:16px;right:16px;z-index:10" onclick="closeProductModal()">X</button>
-    <div class="product-detail-layout">
-      <div class="product-detail-left"><div id="detailImage"></div></div>
-      <div class="product-detail-right">
-        <div class="product-badges" id="detailBadges"></div>
-        <h2 id="detailName">Product</h2>
-        <div class="product-detail-price" id="detailPrice">$0</div>
-        <p class="product-detail-desc" id="detailDesc">Description</p>
-        <div class="art-toggle" id="artToggle" style="display:none">
-          <input type="checkbox" id="artCheck" onchange="updatePrice()">
-          <label>Articulated (+$1)</label>
+    <div class="header-buttons">
+      <button class="cart-button" onclick="toggleCart()">🛒 <span class="cart-badge" id="cartBadge">0</span></button>
+      <div class="user-menu">
+        <button class="user-button" id="userBtn" onclick="toggleUserMenu()">Login</button>
+        <div class="user-dropdown" id="userDropdown">
+          <button onclick="showAuth()">Sign In</button>
+          <button onclick="showFavorites()" class="divider">My Favorites</button>
+          <button onclick="showOrders()">My Orders</button>
+          <button onclick="showAdmin()" class="divider admin-btn">Admin Panel</button>
+          <button onclick="logout()" class="divider">Sign Out</button>
         </div>
-        <div class="size-selector"><label>Select Size</label><div class="size-options" id="sizeOptions"></div></div>
-        <div class="qty-selector"><button onclick="changeQty(-1)">-</button><span id="detailQty">1</span><button onclick="changeQty(1)">+</button></div>
-        <div class="ai-section"><h3>Product Overview</h3><p class="ai-content" id="aiContent">Loading...</p></div>
-        <button class="checkout-btn" onclick="addToCartFromDetail()">Add to Cart</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-links">
+      <button class="nav-btn active" onclick="filterCategory('all', this)">All Products</button>
+      <button class="nav-btn" onclick="filterCategory('Animals', this)">Animals</button>
+      <button class="nav-btn" onclick="filterCategory('Fidgets', this)">Fidgets</button>
+      <button class="nav-btn" onclick="filterCategory('Figures', this)">Figures</button>
+      <button class="nav-btn" onclick="filterCategory('Vehicles', this)">Vehicles</button>
+      <button class="nav-btn" onclick="filterCategory('AirPods', this)">AirPods</button>
+      <button class="nav-btn" onclick="filterCategory('Accessories', this)">Accessories</button>
+      <button class="nav-btn" onclick="showCustomPrint()">Custom Print</button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div id="mainContent" class="container">
+
+    <!-- Featured Section -->
+    <div class="section" id="featuredSection">
+      <div class="section-header">
+        <h2 class="section-title">Featured</h2>
+      </div>
+      <div class="products-row" id="featuredGrid"></div>
+    </div>
+
+    <!-- All Products Section -->
+    <div class="section" id="allSection">
+      <div class="section-header">
+        <h2 class="section-title">All Products</h2>
+      </div>
+      <div class="products-row" id="allGrid"></div>
+    </div>
+
+    <!-- Animals Section -->
+    <div class="section" id="animalsSection">
+      <div class="section-header">
+        <h2 class="section-title">Animals</h2>
+      </div>
+      <div class="products-row" id="animalsGrid"></div>
+    </div>
+
+    <!-- Fidgets Section -->
+    <div class="section" id="fidgetsSection">
+      <div class="section-header">
+        <h2 class="section-title">Fidgets</h2>
+      </div>
+      <div class="products-row" id="fidgetsGrid"></div>
+    </div>
+
+  </div>
+
+  <!-- Favorites Page -->
+  <div id="favoritesPage" class="container">
+    <div class="section-header" style="margin-bottom:20px;">
+      <h2 class="section-title">My Favorites ♥</h2>
+      <button class="view-all" onclick="showSection('all')">Back to Shop</button>
+    </div>
+    <div class="products-row" id="favoritesGrid"></div>
+    <p id="emptyFavorites" style="text-align:center;color:var(--text-light);padding:40px;display:none;">No favorites yet. Click the ♥ on products to save them!</div>
+  </div>
+
+  <!-- Product Detail Modal -->
+  <div class="modal-overlay" id="productModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">Product</h2>
+        <button class="close-btn" onclick="closeModal('productModal')">X</button>
+      </div>
+      <div class="modal-body">
+        <img class="modal-image" id="modalImage" src="" alt="">
+        <div class="modal-price" id="modalPrice">$0</div>
+        <div class="modal-desc" id="modalDesc"></div>
+        <div class="size-selector" id="sizeSelector"></div>
+        <div class="articulated-toggle" id="articulatedToggle" style="display:none;">
+          <input type="checkbox" id="artCheckbox" onchange="updateModalPrice()">
+          <label for="artCheckbox">Articulated (+$1)</label>
+        </div>
+        <div class="qty-selector">
+          <button class="qty-btn" onclick="changeModalQty(-1)">-</button>
+          <span class="qty-val" id="modalQty">1</span>
+          <button class="qty-btn" onclick="changeModalQty(1)">+</button>
+        </div>
+        <button class="add-cart-btn" onclick="addToCartFromDetail()">Add to Cart</button>
       </div>
     </div>
   </div>
-</div>
-<div class="rvgpt-sidebar" id="rvgptSidebar">
-  <div class="rvgpt-header">
-    <img src="RV.png" alt="RVGPT">
-    <h3>RVGPT</h3>
-    <button class="rvgpt-close" onclick="toggleRVGPTSidebar()">X</button>
-  </div>
-  <div class="rvgpt-messages" id="rvgptMessages">
-    <div class="rvgpt-msg bot"><div class="rvgpt-avatar">AI</div><div class="rvgpt-content">Hi! I'm RVGPT. Ask me anything about our 3D printed products!</div></div>
-  </div>
-  <div class="rvgpt-input"><input type="text" id="rvgptInput" placeholder="Ask a question..." onkeypress="if(event.key==='Enter')sendRVGPT()"><button onclick="sendRVGPT()">Send</button></div>
-</div>
-<button class="rvgpt-toggle" onclick="toggleRVGPTSidebar()"><img src="RV.png" alt="AI"></button>
-<div class="admin-panel" id="adminPanel">
-  <div class="admin-header">
-    <h1>Admin Panel</h1>
-    <button class="admin-close" onclick="closeAdminPanel()">X</button>
-  </div>
-  <div class="admin-content">
-    <div class="admin-section">
-      <h2>Recent Orders</h2>
-      <div id="adminOrders"></div>
-    </div>
-    <div class="admin-section">
-      <h2>AI Chat</h2>
-      <input type="text" class="tracker-input" id="adminInput" placeholder="Ask anything..." onkeypress="if(event.key==='Enter')sendAdmin()">
-      <div id="adminChat" style="height:300px;overflow-y:auto;background:#f3f4f6;border-radius:8px;padding:12px;margin-bottom:12px"></div>
-    </div>
-    <div class="admin-section">
-      <h2>Order Tracker</h2>
-      <input type="text" class="tracker-input" id="trackerInput" placeholder="Enter order ID...">
-      <select class="tracker-input" id="trackerStatus">
-        <option value="pending">Pending</option>
-        <option value="ready">Ready for Pickup</option>
-        <option value="picked">Picked Up</option>
-      </select>
-      <button class="tracker-btn" onclick="updateOrderStatus()">Update Status</button>
-      <div id="trackerList" style="margin-top:20px"></div>
+
+  <!-- Cart Modal -->
+  <div class="modal-overlay" id="cartModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Your Cart</h2>
+        <button class="close-btn" onclick="closeCart()">X</button>
+      </div>
+      <div class="modal-body">
+        <div id="cartItems"></div>
+        <div class="cart-total" id="cartTotal">Total: $0</div>
+        <button class="checkout-btn" onclick="checkout()">Checkout (Cash on Pickup)</button>
+      </div>
     </div>
   </div>
-</div>
-<script>
-// Firebase
-const firebaseConfig = { apiKey: "AIzaSyCkxvDFA_1WLA-JbQO91EKC8Le_hQR6yF4", authDomain: "simple-print-6fc4a.firebaseapp.com", projectId: "simple-print-6fc4a", storageBucket: "simple-print-6fc4a.appspot.com", messagingSenderId: "537000000000", appId: "1:537000000000:web:0000000000000000" };
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const googleProvider = new firebase.auth.GoogleAuthProvider();
-const adminEmails = ["ruveer123@gmail.com", "harvmiller13@gmail.com", "harveyninja7@gmail.com"];
 
-// Products - Prices: Small $2, Medium $4, Large $10, XtraLarge $30
-// Articulated: Small $3, Medium $5, Large $13, XtraLarge $35
-const sizePrices = { XtraSmall: 0, Small: 2, KindaSmall: 2, Medium: 4, Large: 10, XtraLarge: 30 };
-const sizePricesArt = { XtraSmall: 1, Small: 3, KindaSmall: 3, Medium: 5, Large: 13, XtraLarge: 35 };
-const sizeOrder = ["Small", "Medium", "Large", "XtraLarge"];
+  <!-- Auth Modal -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Sign In</h2>
+        <button class="close-btn" onclick="closeModal('authModal')">X</button>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        <button class="auth-option" onclick="signInWithGoogle()">🔍 Sign in with Google</button>
+        <div style="margin:16px 0;color:var(--text-light);">or</div>
+        <input class="email-input" id="authEmail" type="email" placeholder="Email">
+        <input class="email-input" id="authPassword" type="password" placeholder="Password">
+        <button class="submit-btn" onclick="signInWithEmail()">Sign In with Email</button>
+        <p style="font-size:0.8rem;color:var(--text-light);margin-top:12px;">No account? Just enter your email and password to sign up.</p>
+      </div>
+    </div>
+  </div>
 
-const allProducts = [
-  // Accessories
-  {id:1,name:"Pen/Pencil Holder",category:"accessories",price:2,desc:"4 inch tall holder",size:"KindaSmall",emoji:"🖊️"},
-  {id:2,name:"Phone Stand",category:"accessories",price:2,desc:"Fits all phones",size:"KindaSmall",image:"phone.png"},
-  // Fidgets
-  {id:3,name:"Cube",category:"fidgets",price:2,desc:"1x1x1 cube",size:"Small",emoji:"🧊"},
-  {id:4,name:"Button Fidget",category:"fidgets",price:2,desc:"1 inch fidget button",size:"XtraSmall",favorite:"fire",image:"button fidget.png"},
-  {id:5,name:"Switch Fidget",category:"fidgets",price:2,desc:"Switch fidget toy",size:"XtraSmall",image:"switch fidget.png"},
-  {id:6,name:"Fidget Spinner",category:"fidgets",price:2,desc:"Smooth spin fidget",size:"Small",favorite:"fire",image:"fidget.png"},
-  // Sports
-  {id:7,name:"Soccer Ball",category:"featured",price:2,desc:"Mini soccer ball",size:"XtraSmall",favorite:"fire",image:"soccer.png"},
-  {id:8,name:"Football",category:"featured",price:2,desc:"1.5 inch football",size:"KindaSmall",favorite:"fire",image:"football.png"},
-  {id:9,name:"Baseball",category:"featured",price:2,desc:"Mini baseball",size:"XtraSmall",emoji:"⚾"},
-  // Vehicles
-  {id:10,name:"Boat",category:"vehicles",price:2,desc:"2 inch boat",size:"Small",emoji:"🚤"},
-  {id:11,name:"Airplane",category:"vehicles",price:2,desc:"2 inch airplane",size:"Small",emoji:"✈️"},
-  {id:12,name:"Car",category:"vehicles",price:2,desc:"Mini car",size:"Small",emoji:"🚗"},
-  // Animals - with articulation option
-  {id:13,name:"Seal",category:"animals",price:2,desc:"2 inch seal",size:"Small",image:"seal.png",art:true},
-  {id:14,name:"Cat",category:"animals",price:2,desc:"2 inch cat",size:"Small",art:true,emoji:"🐱"},
-  {id:15,name:"Dog",category:"animals",price:2,desc:"2 inch dog",size:"Small",art:true,emoji:"🐕"},
-  {id:16,name:"Frog",category:"animals",price:2,desc:"2 inch frog",size:"Small",art:true,emoji:"🐸"},
-  {id:17,name:"Duck",category:"animals",price:2,desc:"1 inch duck",size:"Small",art:true,emoji:"🦆"},
-  {id:18,name:"Dragon",category:"animals",price:2,desc:"2 inch dragon",size:"Small",art:true,image:"dragon.png"},
-  // Figures
-  {id:19,name:"Among Us",category:"figures",price:2,desc:"2 inch crewmate",size:"Small",image:"among us.png"},
-  {id:20,name:"Medieval Knight",category:"figures",price:4,desc:"Knight figure",size:"Medium",emoji:"🛡️"},
-  {id:21,name:"Ragdoll Man",category:"figures",price:3,desc:"Articulated man figure",size:"Small",art:true,image:"ragdoll man.png"},
-  // AirPods Cases - in accessories now
-  {id:22,name:"AirPods Case",category:"accessories",price:2,desc:"Fits AirPods 1st/2nd Gen",size:"XtraSmall",image:"airpods.png"},
-  {id:23,name:"AirPods Pro Case",category:"accessories",price:2,desc:"Fits AirPods Pro",size:"XtraSmall",image:"airpods.png"},
-  {id:24,name:"AirPods Pro 2 Case",category:"accessories",price:2,desc:"Fits AirPods Pro 2nd Gen",size:"XtraSmall",image:"airpods 2.png"},
-  {id:25,name:"AirPods Max Case",category:"accessories",price:4,desc:"Fits AirPods Max",size:"Small",image:"airpods.png"},
-  // More Accessories
-  {id:26,name:"Headphone Stand",category:"accessories",price:4,desc:"Universal headphone stand",size:"Medium",emoji:"🎧"},
-  {id:27,name:"Controller Stand",category:"accessories",price:3,desc:"Fits gaming controllers",size:"Small",emoji:"🎮"},
-  {id:28,name:"Watch Winder",category:"accessories",price:3,desc:"Watch display stand",size:"Small",emoji:"⌚"},
-  {id:29,name:"Desk Organizer",category:"accessories",price:3,desc:"Pen and phone organizer",size:"Small",emoji:"🗃️"},
-];
+  <!-- Custom Print Modal -->
+  <div class="modal-overlay" id="customPrintModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Custom Print Request</h2>
+        <button class="close-btn" onclick="closeModal('customPrintModal')">X</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Description of what you need</label>
+          <textarea id="customDesc" placeholder="Describe your custom print request..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Image URL or reference (optional)</label>
+          <input id="customImage" type="text" placeholder="https://...">
+        </div>
+        <button class="submit-btn" onclick="submitCustomPrint()">Submit Request</button>
+        <p style="font-size:0.8rem;color:var(--text-light);margin-top:8px;">Custom prints take 5-7 business days. Admin will review your request.</p>
+      </div>
+    </div>
+  </div>
 
-let cart = [];
-let currentProduct = null;
-let selectedSize = "Small";
-let detailQuantity = 1;
-let isArticulated = false;
-let currentUser = null;
-let orders = [];
-const RVGPT_URL = "https://rvgpt.onrender.com";
+  <!-- Admin Modal -->
+  <div class="modal-overlay" id="adminModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Admin Panel</h2>
+        <button class="close-btn" onclick="closeModal('adminModal')">X</button>
+      </div>
+      <div class="modal-body">
+        <div id="adminLogin" class="admin-login">
+          <h3 style="margin-bottom:12px;color:var(--orange-red);">Admin Access</h3>
+          <input id="adminPass" type="password" placeholder="Enter admin password">
+          <button class="submit-btn" onclick="checkAdminPass()">Enter</button>
+          <p style="font-size:0.8rem;color:var(--text-light);margin-top:8px;">Contact admin for password.</p>
+        </div>
+        <div id="adminContent" style="display:none;">
+          <div class="admin-section">
+            <h3>Recent Orders</h3>
+            <div id="adminOrders"></div>
+          </div>
+          <div class="admin-section">
+            <h3>Custom Print Requests</h3>
+            <div id="adminCustomPrints"></div>
+          </div>
+          <div class="admin-section">
+            <h3>Order Tracker</h3>
+            <div id="orderTracker"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-function renderProducts(filtered=null) {
-  const grid = document.getElementById("productsGrid");
-  let products = filtered || allProducts.filter(p => p.favorite || p.deal);
-  if (filtered) products = filtered;
-  grid.innerHTML = products.map(p => {
-    let badges = "";
-    if (p.favorite === "fire") badges += '<span class="badge fire">Popular</span>';
-    if (p.favorite === "worker") badges += '<span class="badge worker">Favorite</span>';
-    if (p.deal) badges += '<span class="badge deal">' + p.deal + '</span>';
-    if (p.art) badges += '<span class="badge art">Articulated</span>';
-    let imgContent;
-    if (p.image) {
-      imgContent = '<img src="' + p.image + '" alt="' + p.name + '" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<span style=&quot;font-size:3rem&quot;>' + (p.emoji || '📦') + '</span>\'">';
-    } else {
-      imgContent = '<span style="font-size:3rem">' + (p.emoji || '📦') + '</span>';
+  <!-- Orders Modal -->
+  <div class="modal-overlay" id="ordersModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>My Orders</h2>
+        <button class="close-btn" onclick="closeModal('ordersModal')">X</button>
+      </div>
+      <div class="modal-body" id="ordersContent"></div>
+    </div>
+  </div>
+
+  <!-- Netlify Forms (hidden) -->
+  <form name="cart-order" netlify hidden>
+    <input type="text" name="name">
+    <input type="email" name="email">
+    <textarea name="order"></textarea>
+  </form>
+  <form name="custom-print" netlify hidden>
+    <input type="text" name="name">
+    <input type="email" name="email">
+    <textarea name="description"></textarea>
+    <input type="text" name="image">
+  </form>
+
+  <!-- RVGPT Button -->
+  <button class="rvgpt-btn" onclick="toggleRVGPT()">
+    <img src="RV.png" alt="RVGPT" onerror="this.style.display='none';this.parentNode.innerHTML='🤖';">
+  </button>
+
+  <!-- RVGPT Sidebar -->
+  <div class="rvgpt-sidebar" id="rvgptSidebar">
+    <div class="rvgpt-header">
+      <img src="RV.png" alt="RV" onerror="this.style.display='none';">
+      <span>RVGPT</span>
+    </div>
+    <div class="rvgpt-messages" id="rvgptMessages">
+      <div class="rvgpt-msg bot">Hi! I'm RVGPT. Ask me anything about our 3D printed products!</div>
+    </div>
+    <div class="rvgpt-input">
+      <input type="text" id="rvgptInput" placeholder="Ask about products..." onkeydown="if(event.key==='Enter')sendRVGPT()">
+      <button onclick="sendRVGPT()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    // Firebase Config - API key is safe in frontend Firebase code
+    const firebaseConfig = {
+      apiKey: "AIzaSyCkxvDFA_1WLA-JbQO91EKC8Le_hQR6yF4",
+      authDomain: "simple-print-6fc4a.firebaseapp.com",
+      projectId: "simple-print-6fc4a",
+      storageBucket: "simple-print-6fc4a.firebasestorage.app",
+      messagingSenderId: "420956912281",
+      appId: "1:420956912281:web:5afbe3bde16b63e980d608",
+      measurementId: "G-QRQWF7WHYH"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Admin config
+    const ADMIN_PASS = "123456789";
+    const ADMIN_EMAILS = [
+      "ruveer123@gmail.com",
+      "harvmiller13@gmail.com",
+      "harveyninja7@gmail.com",
+      "wchy770229@gmail.com",
+      "soundguy3500@gmail.com"
+    ];
+
+    // Products
+    const products = [
+      { id: 1, name: "Soccer Ball", desc: "Classic soccer ball, perfect for sports lovers", price: 2, category: "Vehicles", emoji: "⚽", image: "soccer.png", badge: "fire", art: true },
+      { id: 2, name: "Football", desc: "American football with detailed stitching", price: 2, category: "Vehicles", emoji: "🏈", image: "football.png", badge: "fire" },
+      { id: 3, name: "Phone Stand", desc: "Adjustable phone stand for all devices", price: 3, category: "Accessories", emoji: "📱", image: "phone.png" },
+      { id: 4, name: "Fidget Spinner", desc: "Smooth spinning fidget toy", price: 2, category: "Fidgets", emoji: "🌀", image: "fidget.png", badge: "fire" },
+      { id: 5, name: "Button Fidget", desc: "Clicky button fidget for stress relief", price: 2, category: "Fidgets", emoji: "🔘", image: "button fidget.png" },
+      { id: 6, name: "Switch Fidget", desc: "Flip switch fidget toy", price: 2, category: "Fidgets", emoji: "🔛", image: "switch fidget.png" },
+      { id: 7, name: "Seal", desc: "Cute articulated seal figure", price: 3, category: "Animals", emoji: "🦭", image: "seal.png", art: true, badge: "worker" },
+      { id: 8, name: "Dragon", desc: "Articulated dragon with movable joints", price: 3, category: "Animals", emoji: "🐉", image: "dragon.png", art: true, badge: "fire" },
+      { id: 9, name: "Among Us", desc: "Crewmate from Among Us game", price: 2, category: "Figures", emoji: "👾", image: "among us.png", badge: "deal" },
+      { id: 10, name: "AirPods Case", desc: "Protective case for AirPods", price: 4, category: "AirPods", emoji: "🎧", image: "airpods.png" },
+      { id: 11, name: "AirPods Pro Case", desc: "Protective case for AirPods Pro", price: 4, category: "AirPods", emoji: "🎧", image: "airpods 2.png" },
+      { id: 12, name: "RV Figure", desc: "Custom RV vehicle figure", price: 3, category: "Vehicles", emoji: "🚐", image: "RV.png" }
+    ];
+
+    const sizes = [
+      { name: "Small", price: 0 },
+      { name: "Medium", price: 2 },
+      { name: "Large", price: 8 },
+      { name: "XLarge", price: 28 }
+    ];
+
+    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
+    let currentUser = null;
+    let selectedProduct = null;
+    let selectedSize = 0;
+    let modalQty = 1;
+    let isAdmin = false;
+
+    // Auth state
+    auth.onAuthStateChanged(user => {
+      currentUser = user;
+      const btn = document.getElementById("userBtn");
+      if (user) {
+        btn.textContent = user.email.split("@")[0];
+        document.getElementById("userDropdown").querySelector(".admin-btn").style.display =
+          ADMIN_EMAILS.includes(user.email) ? "block" : "none";
+        loadFavoritesFromDB();
+      } else {
+        btn.textContent = "Login";
+        document.getElementById("userDropdown").querySelector(".admin-btn").style.display = "none";
+      }
+      updateCartBadge();
+    });
+
+    // Render functions
+    function renderProductCard(p, container) {
+      const isFav = favorites.includes(p.id);
+      const imgSrc = p.image ? p.image : "";
+      const imgContent = imgSrc ? `<img src="${imgSrc}" alt="${p.name}" onerror="this.style.display='none';this.parentNode.innerHTML='<span style=font-size:3rem>${p.emoji||"📦"}</span>';">` : `<span style="font-size:3rem">${p.emoji||"📦"}</span>`;
+      const badges = p.badge ? `<span class="badge ${p.badge}">${p.badge==="fire"?"🔥Popular":p.badge==="worker"?"♥Favorite":"⚡Deal"}</span>` : "";
+      container.innerHTML += `
+        <div class="product-card" onclick="showProductDetail(${p.id})">
+          <button class="fav-btn ${isFav?"favorited":""}" onclick="event.stopPropagation();toggleFavorite(${p.id})">${isFav?"♥":"♡"}</button>
+          <div class="product-image">${imgContent}</div>
+          <div class="product-info">
+            <div class="product-badges">${badges}</div>
+            <div class="product-name">${p.name}</div>
+            <div class="product-desc">${p.desc}</div>
+            <div class="product-price">$${p.price}</div>
+            <button class="add-btn" onclick="event.stopPropagation();quickAdd(${p.id})">Add to Cart</button>
+          </div>
+        </div>`;
     }
-    return '<div class="product-card" onclick="showProductDetail(' + p.id + ')"><div class="product-image">' + imgContent + '</div><div class="product-info"><div class="product-badges">' + badges + '</div><div class="product-name">' + p.name + '</div><div class="product-desc">' + p.desc + '</div><div class="product-price">$' + p.price + '</div><button class="add-btn" onclick="event.stopPropagation();quickAdd(' + p.id + ')">Add to Cart</button></div></div>';
-  }).join("");
-}
 
-function goHome() { filterCategory("featured"); window.scrollTo(0,0); }
-function filterCategory(cat) {
-  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-  document.querySelector('[data-category="' + cat + '"]').classList.add("active");
-  if (cat === "featured") renderProducts(allProducts.filter(p => p.favorite || p.deal));
-  else if (cat === "all") renderProducts(allProducts);
-  else renderProducts(allProducts.filter(p => p.category === cat));
-}
-function searchProducts(q) { if (!q) filterCategory("featured"); else renderProducts(allProducts.filter(p => p.name.toLowerCase().includes(q.toLowerCase()))); }
+    function renderAll() {
+      document.getElementById("featuredGrid").innerHTML = "";
+      document.getElementById("allGrid").innerHTML = "";
+      document.getElementById("animalsGrid").innerHTML = "";
+      document.getElementById("fidgetsGrid").innerHTML = "";
 
-function quickAdd(id) {
-  const p = allProducts.find(x => x.id === id);
-  const size = p.size || "Small";
-  const price = p.price;
-  const existing = cart.find(x => x.id === id && x.size === size);
-  if (existing) existing.qty++; else cart.push({ ...p, size, qty: 1, price });
-  updateCartBadge();
-}
+      products.forEach(p => {
+        if (p.badge) renderProductCard(p, document.getElementById("featuredGrid"));
+        renderProductCard(p, document.getElementById("allGrid"));
+        if (p.category === "Animals") renderProductCard(p, document.getElementById("animalsGrid"));
+        if (p.category === "Fidgets") renderProductCard(p, document.getElementById("fidgetsGrid"));
+      });
 
-function addToCartFromDetail() {
-  const p = allProducts.find(x => x.id === currentProduct);
-  const prices = isArticulated ? sizePricesArt : sizePrices;
-  const price = prices[selectedSize];
-  const existing = cart.find(x => x.id === p.id && x.size === selectedSize && x.art === isArticulated);
-  if (existing) existing.qty += detailQuantity;
-  else cart.push({ id: p.id, name: p.name, price, size: selectedSize, qty: detailQuantity, art: isArticulated });
-  updateCartBadge();
-  closeProductModal();
-}
+      if (!document.getElementById("featuredGrid").innerHTML) {
+        document.getElementById("featuredSection").style.display = "none";
+      }
+    }
 
-function updateCartBadge() { document.getElementById("cartBadge").textContent = cart.reduce((a, x) => a + x.qty, 0); }
+    function filterCategory(cat, btn) {
+      document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+      if (btn) btn.classList.add("active");
+      if (cat === "all") {
+        showSection("all");
+        return;
+      }
+      document.getElementById("mainContent").classList.add("hide");
+      document.getElementById("favoritesPage").classList.remove("show");
+      // Create filtered view
+      const container = document.getElementById("allGrid");
+      container.innerHTML = "";
+      products.filter(p => p.category === cat).forEach(p => renderProductCard(p, container));
+      document.getElementById("allSection").querySelector(".section-title").textContent = cat;
+      document.getElementById("allSection").style.display = "block";
+      document.getElementById("featuredSection").style.display = "none";
+      document.getElementById("animalsSection").style.display = "none";
+      document.getElementById("fidgetsSection").style.display = "none";
+    }
 
-function toggleCart() { document.getElementById("cartModal").classList.toggle("open"); renderCart(); }
-function renderCart() {
-  const container = document.getElementById("cartItems");
-  if (cart.length === 0) container.innerHTML = "<p style='text-align:center;color:var(--text-light)'>Your cart is empty</p>";
-  else {
-    container.innerHTML = cart.map((p, i) => '<div class="cart-item"><div style="font-size:2rem">' + (p.emoji || '📦') + '</div><div class="cart-item-info"><div class="cart-item-name">' + p.name + '</div><div class="cart-item-size">' + (p.art ? "Articulated " : "") + p.size + ' - $' + p.price + '</div></div><div class="cart-item-qty"><button class="qty-btn" onclick="changeCartQty(' + i + ',-1)">-</button><span>' + p.qty + '</span><button class="qty-btn" onclick="changeCartQty(' + i + ',1)">+</button></div></div>').join("");
-  }
-  document.getElementById("cartTotal").textContent = "$" + cart.reduce((a, x) => a + x.price * x.qty, 0);
-}
+    function showSection(section) {
+      document.getElementById("mainContent").classList.remove("hide");
+      document.getElementById("favoritesPage").classList.remove("show");
+      document.getElementById("featuredSection").style.display = "";
+      document.getElementById("animalsSection").style.display = "";
+      document.getElementById("fidgetsSection").style.display = "";
+      document.getElementById("allSection").style.display = "";
+      document.getElementById("allSection").querySelector(".section-title").textContent = "All Products";
+      renderAll();
+      document.querySelectorAll(".nav-btn").forEach((b,i) => b.classList.toggle("active", i===0));
+    }
 
-function changeCartQty(i, delta) { cart[i].qty += delta; if (cart[i].qty <= 0) cart.splice(i, 1); updateCartBadge(); renderCart(); }
+    // Product Detail
+    function showProductDetail(id) {
+      selectedProduct = products.find(p => p.id === id);
+      if (!selectedProduct) return;
+      document.getElementById("modalTitle").textContent = selectedProduct.name;
+      const imgEl = document.getElementById("modalImage");
+      if (selectedProduct.image) {
+        imgEl.src = selectedProduct.image;
+        imgEl.style.display = "";
+      } else {
+        imgEl.style.display = "none";
+      }
+      document.getElementById("modalDesc").textContent = selectedProduct.desc;
+      document.getElementById("articulatedToggle").style.display = selectedProduct.art ? "" : "none";
+      document.getElementById("artCheckbox").checked = false;
+      modalQty = 1;
+      document.getElementById("modalQty").textContent = modalQty;
 
-function checkout() {
-  if (cart.length === 0) return alert("Cart is empty!");
-  const total = cart.reduce((a, x) => a + x.price * x.qty, 0);
-  const orderId = "SP" + Date.now();
-  const order = { id: orderId, items: [...cart], total, status: "pending", date: new Date().toLocaleDateString(), email: currentUser?.email || "guest" };
-  orders.push(order);
-  const orderText = cart.map(x => x.qty + "x " + x.name + " (" + (x.art ? "Articulated " : "") + x.size + ")").join("\n");
-  window.open("https://wa.me/447500000000?text=" + encodeURIComponent("Order #" + orderId + "\n\n" + orderText + "\n\nTotal: $" + total));
-  cart = []; updateCartBadge(); renderCart(); closeCart();
-}
+      const sizeContainer = document.getElementById("sizeSelector");
+      sizeContainer.innerHTML = sizes.map((s, i) =>
+        `<button class="size-btn ${i===0?"active":""}" onclick="selectSize(${i},this)">${s.name} ($${selectedProduct.price+s.price})</button>`
+      ).join("");
+      selectedSize = 0;
+      updateModalPrice();
+      document.getElementById("productModal").classList.add("open");
+    }
 
-function showProductDetail(id) {
-  currentProduct = id;
-  const p = allProducts.find(x => x.id === id);
-  let imgContent;
-  if (p.image) {
-    imgContent = '<img src="' + p.image + '" alt="' + p.name + '" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<span style=&quot;font-size:5rem&quot;>' + (p.emoji || '📦') + '</span>\'">';
-  } else {
-    imgContent = '<span style="font-size:5rem">' + (p.emoji || '📦') + '</span>';
-  }
-  document.getElementById("detailImage").innerHTML = imgContent;
-  document.getElementById("detailName").textContent = p.name;
-  document.getElementById("detailDesc").textContent = p.desc;
-  selectedSize = p.size || "Small";
-  detailQuantity = 1;
-  isArticulated = false;
-  document.getElementById("detailQty").textContent = 1;
-  document.getElementById("artCheck").checked = false;
-  document.getElementById("artToggle").style.display = p.art ? "flex" : "none";
-  updatePrice();
-  document.getElementById("sizeOptions").innerHTML = sizeOrder.map(s => '<button class="size-btn ' + (s === selectedSize ? "active" : "") + '" onclick="selectSize(\'' + s + '\')">' + s.replace("Xtra", "Xtra ") + "</button>").join("");
-  let badges = "";
-  if (p.favorite === "fire") badges += '<span class="badge fire">Popular</span>';
-  if (p.favorite === "worker") badges += '<span class="badge worker">Favorite</span>';
-  if (p.art) badges += '<span class="badge art">Articulated Available</span>';
-  document.getElementById("detailBadges").innerHTML = badges;
-  document.getElementById("aiContent").textContent = "Loading overview...";
-  fetch(RVGPT_URL + "/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: "Give a short 2-3 sentence description for a 3D printed " + p.name }) })
-    .then(r => r.json()).then(d => { document.getElementById("aiContent").textContent = d.response || "Modern design, perfect for gifts or personal use. Printed in durable PLA plastic."; })
-    .catch(() => { document.getElementById("aiContent").textContent = "Contact us for more details about this product!"; });
-  document.getElementById("productModal").classList.add("open");
-}
+    function selectSize(i, btn) {
+      selectedSize = i;
+      document.querySelectorAll(".size-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      updateModalPrice();
+    }
 
-function selectSize(s) { selectedSize = s; updatePrice(); document.querySelectorAll(".size-btn").forEach(b => b.classList.remove("active")); event.target.classList.add("active"); }
-function updatePrice() {
-  isArticulated = document.getElementById("artCheck")?.checked || false;
-  const prices = isArticulated ? sizePricesArt : sizePrices;
-  const p = allProducts.find(x => x.id === currentProduct);
-  document.getElementById("detailPrice").textContent = "$" + (p.price + prices[selectedSize]);
-}
-function changeQty(delta) { detailQuantity = Math.max(1, detailQuantity + delta); document.getElementById("detailQty").textContent = detailQuantity; }
-function closeProductModal() { document.getElementById("productModal").classList.remove("open"); }
+    function updateModalPrice() {
+      if (!selectedProduct) return;
+      const base = selectedProduct.price + sizes[selectedSize].price;
+      const total = document.getElementById("artCheckbox").checked ? base + 1 : base;
+      document.getElementById("modalPrice").textContent = "$" + total;
+    }
 
-function closeModal(e) { if (e.target === e.currentTarget) e.currentTarget.classList.remove("open"); }
-function closeCart() { document.getElementById("cartModal").classList.remove("open"); }
-function closeLoginModal() { document.getElementById("loginModal").classList.remove("open"); }
-function closeOrdersModal() { document.getElementById("ordersModal").classList.remove("open"); }
-function showLoginModal() { document.getElementById("loginModal").classList.add("open"); }
-function closeAdminPanel() { document.getElementById("adminPanel").classList.remove("open"); }
+    function changeModalQty(delta) {
+      modalQty = Math.max(1, modalQty + delta);
+      document.getElementById("modalQty").textContent = modalQty;
+    }
 
-function toggleUserMenu() { document.getElementById("userDropdown").classList.toggle("show"); }
+    // Cart
+    function quickAdd(id) {
+      if (!currentUser) { showAuth(); return; }
+      const p = products.find(x => x.id === id);
+      if (!p) return;
+      cart.push({ id: p.id, name: p.name, price: p.price, size: "Small", art: false, qty: 1, emoji: p.emoji, image: p.image });
+      updateCartBadge();
+      saveCart();
+    }
 
-function signInWithGoogle() { auth.signInWithPopup(googleProvider).then(() => closeLoginModal()).catch(e => alert(e.message)); }
-function signInEmail() { alert("Email sign-in would require more setup. Use Google sign-in for now."); }
-function logout() { auth.signOut(); }
-function showOrdersModal() { document.getElementById("ordersModal").classList.add("open"); renderMyOrders(); }
-function renderMyOrders() {
-  const myOrders = orders.filter(o => o.email === currentUser?.email);
-  document.getElementById("ordersList").innerHTML = myOrders.length ? myOrders.map(o => '<div class="order-item"><span class="order-id">#' + o.id + '</span><span class="order-status ' + o.status + '">' + o.status + '</span></div>').join("") : "<p>No orders yet</p>";
-}
-function showAdminPanel() { document.getElementById("adminPanel").classList.add("open"); renderAdminOrders(); }
+    function addToCartFromDetail() {
+      if (!currentUser) { closeModal("productModal"); showAuth(); return; }
+      if (!selectedProduct) return;
+      const art = document.getElementById("artCheckbox").checked;
+      const size = sizes[selectedSize];
+      const price = selectedProduct.price + size.price + (art ? 1 : 0);
+      for (let i = 0; i < modalQty; i++) {
+        cart.push({ id: selectedProduct.id, name: selectedProduct.name, price, size: size.name, art, qty: 1, emoji: selectedProduct.emoji, image: selectedProduct.image });
+      }
+      updateCartBadge();
+      saveCart();
+      closeModal("productModal");
+    }
 
-auth.onAuthStateChanged(user => {
-  currentUser = user;
-  if (user) {
-    document.getElementById("userButton").textContent = user.email?.charAt(0).toUpperCase();
-    document.getElementById("logoutBtn").style.display = "block";
-    document.getElementById("myOrdersBtn").style.display = "block";
-    document.getElementById("adminBtn").style.display = adminEmails.includes(user.email) ? "block" : "none";
-  } else {
-    document.getElementById("userButton").textContent = "Login";
-    document.getElementById("logoutBtn").style.display = "none";
-    document.getElementById("myOrdersBtn").style.display = "none";
-    document.getElementById("adminBtn").style.display = "none";
-  }
-});
+    function updateCartBadge() {
+      document.getElementById("cartBadge").textContent = cart.reduce((a, x) => a + x.qty, 0);
+    }
 
-function renderAdminOrders() {
-  document.getElementById("adminOrders").innerHTML = orders.slice(-10).reverse().map(o => '<div class="order-item"><span class="order-id">#' + o.id + '</span><span class="order-status ' + o.status + '">' + o.status + '</span></div>').join("") || "<p>No orders</p>";
-}
+    function saveCart() { localStorage.setItem("cart", JSON.stringify(cart)); }
 
-async function sendAdmin() {
-  const text = document.getElementById("adminInput").value.trim();
-  if (!text) return;
-  const chat = document.getElementById("adminChat");
-  chat.innerHTML += '<div style="margin-bottom:8px"><strong>You:</strong> ' + text + '</div>';
-  document.getElementById("adminInput").value = "";
-  try {
-    const res = await fetch(RVGPT_URL + "/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text }) });
-    const data = await res.json();
-    chat.innerHTML += '<div style="margin-bottom:12px;color:var(--primary)"><strong>AI:</strong> ' + (data.response || "No response") + '</div>';
-    chat.scrollTop = chat.scrollHeight;
-  } catch (e) { chat.innerHTML += '<div>Connection error. Make sure RVGPT is running!</div>'; }
-}
+    function toggleCart() {
+      renderCart();
+      document.getElementById("cartModal").classList.toggle("open");
+    }
 
-function updateOrderStatus() {
-  const id = document.getElementById("trackerInput").value;
-  const status = document.getElementById("trackerStatus").value;
-  const order = orders.find(o => o.id === id);
-  if (order) { order.status = status; alert("Updated!"); renderAdminOrders(); }
-  else alert("Order not found");
-}
+    function closeCart() { document.getElementById("cartModal").classList.remove("open"); }
 
-function toggleRVGPTSidebar() { document.getElementById("rvgptSidebar").classList.toggle("open"); }
+    function renderCart() {
+      const container = document.getElementById("cartItems");
+      if (cart.length === 0) {
+        container.innerHTML = '<div class="empty-cart">Your cart is empty</div>';
+        document.getElementById("cartTotal").textContent = "Total: $0";
+        return;
+      }
+      container.innerHTML = cart.map((p, i) => `
+        <div class="cart-item">
+          <div class="cart-item-emoji">${p.image ? `<img src="${p.image}" style="width:40px;height:40px;object-fit:contain;">` : (p.emoji || "📦")}</div>
+          <div class="cart-item-info">
+            <div class="cart-item-name">${p.name}</div>
+            <div class="cart-item-size">${p.art ? "Articulated " : ""}${p.size} - $${p.price}</div>
+          </div>
+          <div class="cart-item-qty">
+            <button class="qty-btn" onclick="changeCartQty(${i},-1)">-</button>
+            <span>${p.qty}</span>
+            <button class="qty-btn" onclick="changeCartQty(${i},1)">+</button>
+          </div>
+        </div>`).join("");
+      const total = cart.reduce((a, x) => a + x.price * x.qty, 0);
+      document.getElementById("cartTotal").textContent = "Total: $" + total;
+    }
 
-async function sendRVGPT() {
-  const input = document.getElementById("rvgptInput");
-  const text = input.value.trim();
-  if (!text) return;
-  const msgs = document.getElementById("rvgptMessages");
-  msgs.innerHTML += '<div class="rvgpt-msg user"><div class="rvgpt-avatar">You</div><div class="rvgpt-content">' + text + '</div></div>';
-  input.value = "";
-  msgs.scrollTop = msgs.scrollHeight;
-  try {
-    const res = await fetch(RVGPT_URL + "/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: "You are a helpful assistant for Simple Prints 3D printing store. " + text }) });
-    const data = await res.json();
-    msgs.innerHTML += '<div class="rvgpt-msg bot"><div class="rvgpt-avatar">AI</div><div class="rvgpt-content">' + (data.response || "Try again!") + '</div></div>';
-  } catch (e) { msgs.innerHTML += '<div class="rvgpt-msg bot"><div class="rvgpt-avatar">AI</div><div class="rvgpt-content">AI is waking up... try again in a moment!</div></div>'; }
-  msgs.scrollTop = msgs.scrollHeight;
-}
+    function changeCartQty(i, delta) {
+      cart[i].qty += delta;
+      if (cart[i].qty <= 0) cart.splice(i, 1);
+      updateCartBadge(); saveCart(); renderCart();
+    }
 
-renderProducts();
-</script>
+    function checkout() {
+      if (!currentUser) { showAuth(); return; }
+      if (cart.length === 0) return alert("Cart is empty!");
+      const orderDetails = cart.map(p => `${p.qty}x ${p.name} (${p.size}${p.art?" Articulated":""}) - $${p.price}`).join("\n");
+      const total = cart.reduce((a, x) => a + x.price * x.qty, 0);
+
+      // Submit to Netlify Form
+      const form = document.createElement("form");
+      form.name = "cart-order";
+      form.netlify = "true";
+      form.style.display = "none";
+      form.innerHTML = `
+        <input name="name" value="${currentUser.email}">
+        <input name="email" value="${currentUser.email}">
+        <textarea name="order">Order:\n${orderDetails}\n\nTotal: $${total}\nCustomer: ${currentUser.email}</textarea>
+      `;
+      document.body.appendChild(form);
+      const formData = new FormData(form);
+      fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(formData).toString() })
+        .then(() => {
+          alert("Order placed! Total: $" + total + "\nCash on pickup. We'll email you at " + currentUser.email);
+          cart = [];
+          updateCartBadge(); saveCart(); renderCart(); closeCart();
+        })
+        .catch(() => {
+          // Fallback
+          alert("Order placed! Total: $" + total + "\nCash on pickup.");
+          cart = [];
+          updateCartBadge(); saveCart(); renderCart(); closeCart();
+        });
+      document.body.removeChild(form);
+    }
+
+    // Favorites
+    function toggleFavorite(id) {
+      if (!currentUser) { showAuth(); return; }
+      const idx = favorites.indexOf(id);
+      if (idx >= 0) favorites.splice(idx, 1);
+      else {
+        if (favorites.length >= 6) return alert("You can only favorite up to 6 items!");
+        favorites.push(id);
+      }
+      saveFavorites();
+      renderAll();
+      renderFavoritesPage();
+    }
+
+    function saveFavorites() {
+      localStorage.setItem("favorites", JSON.stringify(favorites));
+      if (currentUser) db.collection("favorites").doc(currentUser.uid).set({ ids: favorites }).catch(()=>{});
+    }
+
+    function loadFavoritesFromDB() {
+      if (!currentUser) return;
+      db.collection("favorites").doc(currentUser.uid).get().then(doc => {
+        if (doc.exists) { favorites = doc.data().ids || []; saveFavorites(); renderAll(); }
+      }).catch(()=>{});
+    }
+
+    function showFavorites() {
+      if (!currentUser) { showAuth(); return; }
+      document.getElementById("mainContent").classList.add("hide");
+      document.getElementById("favoritesPage").classList.add("show");
+      renderFavoritesPage();
+    }
+
+    function renderFavoritesPage() {
+      const grid = document.getElementById("favoritesGrid");
+      grid.innerHTML = "";
+      if (favorites.length === 0) {
+        document.getElementById("emptyFavorites").style.display = "block";
+        return;
+      }
+      document.getElementById("emptyFavorites").style.display = "none";
+      favorites.forEach(id => {
+        const p = products.find(x => x.id === id);
+        if (p) renderProductCard(p, grid);
+      });
+    }
+
+    // Auth
+    function showAuth() { document.getElementById("authModal").classList.add("open"); }
+    function toggleUserMenu() { document.getElementById("userDropdown").classList.toggle("show"); }
+
+    function signInWithGoogle() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).then(() => {
+        closeModal("authModal");
+      }).catch(err => alert(err.message));
+    }
+
+    function signInWithEmail() {
+      const email = document.getElementById("authEmail").value;
+      const pass = document.getElementById("authPassword").value;
+      if (!email || !pass) return alert("Enter email and password");
+      auth.signInWithEmailAndPassword(email, pass).catch(() =>
+        auth.createUserWithEmailAndPassword(email, pass).catch(err => alert(err.message))
+      ).then(() => closeModal("authModal"));
+    }
+
+    function logout() {
+      auth.signOut();
+      document.getElementById("userDropdown").classList.remove("show");
+      isAdmin = false;
+    }
+
+    // Custom Print
+    function showCustomPrint() {
+      if (!currentUser) { showAuth(); return; }
+      document.getElementById("customDesc").value = "";
+      document.getElementById("customImage").value = "";
+      document.getElementById("customPrintModal").classList.add("open");
+    }
+
+    function submitCustomPrint() {
+      if (!currentUser) return;
+      const desc = document.getElementById("customDesc").value.trim();
+      if (!desc) return alert("Please describe what you need printed.");
+      // Spam/inappropriate filter
+      const badWords = ["spam","hack","virus","inappropriate","badword"];
+      const lowerDesc = desc.toLowerCase();
+      if (badWords.some(w => lowerDesc.includes(w))) return alert("Your request contains inappropriate content.");
+      if (desc.length > 500) return alert("Description too long. Keep it under 500 characters.");
+
+      const img = document.getElementById("customImage").value;
+      // Submit to Netlify Form
+      const form = document.createElement("form");
+      form.name = "custom-print";
+      form.netlify = "true";
+      form.style.display = "none";
+      form.innerHTML = `
+        <input name="name" value="${currentUser.email}">
+        <input name="email" value="${currentUser.email}">
+        <textarea name="description">${desc}</textarea>
+        <input name="image" value="${img}">
+      `;
+      document.body.appendChild(form);
+      fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams(new FormData(form)).toString() })
+        .then(() => {
+          alert("Custom print request submitted! Admin will review and email you.");
+          closeModal("customPrintModal");
+        })
+        .catch(() => {
+          alert("Request submitted!");
+          closeModal("customPrintModal");
+        });
+      document.body.removeChild(form);
+
+      // Save to Firestore for admin
+      db.collection("customPrints").add({
+        user: currentUser.email,
+        description: desc,
+        image: img,
+        status: "pending",
+        created: new Date()
+      }).catch(()=>{});
+    }
+
+    // Admin
+    function showAdmin() {
+      if (!currentUser) { showAuth(); return; }
+      if (!ADMIN_EMAILS.includes(currentUser.email)) return alert("Admin access only.");
+      document.getElementById("adminModal").classList.add("open");
+      document.getElementById("adminLogin").style.display = isAdmin ? "none" : "";
+      document.getElementById("adminContent").style.display = isAdmin ? "" : "none";
+      if (isAdmin) loadAdminData();
+    }
+
+    function checkAdminPass() {
+      const pass = document.getElementById("adminPass").value;
+      if (pass === ADMIN_PASS) {
+        isAdmin = true;
+        document.getElementById("adminLogin").style.display = "none";
+        document.getElementById("adminContent").style.display = "";
+        loadAdminData();
+      } else {
+        alert("Wrong password");
+      }
+    }
+
+    function loadAdminData() {
+      // Load orders
+      db.collection("orders").orderBy("created", "desc").limit(20).get().then(snap => {
+        const container = document.getElementById("adminOrders");
+        if (snap.empty) { container.innerHTML = "<p>No orders yet.</p>"; return; }
+        container.innerHTML = "";
+        snap.forEach(doc => {
+          const o = doc.data();
+          container.innerHTML += `<div class="order-item"><strong>${o.user}</strong><br>${o.details}<br><small>${o.created?.toDate?.()?.toLocaleString()||""}</small></div>`;
+        });
+      }).catch(() => {
+        document.getElementById("adminOrders").innerHTML = "<p>Login with admin email to view orders.</p>";
+      });
+
+      // Load custom prints
+      db.collection("customPrints").where("status","==","pending").get().then(snap => {
+        const container = document.getElementById("adminCustomPrints");
+        if (snap.empty) { container.innerHTML = "<p>No pending requests.</p>"; return; }
+        container.innerHTML = "";
+        snap.forEach(doc => {
+          const p = doc.data();
+          container.innerHTML += `
+            <div class="order-item">
+              <strong>${p.user}</strong><br>
+              ${p.description}<br>
+              ${p.image?`<a href="${p.image}" target="_blank">View Image</a><br>`:""}
+              <button class="status-btn ready" onclick="approveCustomPrint('${doc.id}')">Approve</button>
+              <button class="status-btn picked" onclick="denyCustomPrint('${doc.id}')">Deny</button>
+            </div>`;
+        });
+      });
+    }
+
+    function approveCustomPrint(id) {
+      db.collection("customPrints").doc(id).update({ status: "approved" }).then(() => loadAdminData());
+    }
+
+    function denyCustomPrint(id) {
+      db.collection("customPrints").doc(id).update({ status: "denied" }).then(() => loadAdminData());
+    }
+
+    // Orders
+    function showOrders() {
+      if (!currentUser) { showAuth(); return; }
+      db.collection("orders").where("user","==",currentUser.email).orderBy("created","desc").get().then(snap => {
+        const container = document.getElementById("ordersContent");
+        if (snap.empty) { container.innerHTML = "<p>No orders yet.</p>"; return; }
+        container.innerHTML = "";
+        snap.forEach(doc => {
+          const o = doc.data();
+          container.innerHTML += `<div class="order-item"><strong>Order #${doc.id}</strong><br>${o.details}<br><small>${o.created?.toDate?.()?.toLocaleString()||""}</small></div>`;
+        });
+      }).catch(() => {
+        document.getElementById("ordersContent").innerHTML = "<p>Orders will appear here after checkout.</p>";
+      });
+      document.getElementById("ordersModal").classList.add("open");
+    }
+
+    // RVGPT
+    function toggleRVGPT() {
+      document.getElementById("rvgptSidebar").classList.toggle("open");
+    }
+
+    function sendRVGPT() {
+      const input = document.getElementById("rvgptInput");
+      const msg = input.value.trim();
+      if (!msg) return;
+      const messages = document.getElementById("rvgptMessages");
+      messages.innerHTML += `<div class="rvgpt-msg user">${msg}</div>`;
+      input.value = "";
+
+      // Find matching product
+      const product = products.find(p => p.name.toLowerCase().includes(msg.toLowerCase()) || p.desc.toLowerCase().includes(msg.toLowerCase()));
+      setTimeout(() => {
+        if (product) {
+          const imgHtml = product.image ? `<br><img src="${product.image}" style="width:100%;max-height:150px;object-fit:contain;border-radius:8px;margin-top:8px;" onerror="this.style.display='none';">` : "";
+          messages.innerHTML += `<div class="rvgpt-msg bot">We have <strong>${product.name}</strong>! ${product.desc}<br>Price starts at $${product.price}.${imgHtml}</div>`;
+        } else {
+          messages.innerHTML += `<div class="rvgpt-msg bot">I'd be happy to help! We have various 3D printed items. You can also request a <a href="#" onclick="toggleRVGPT();showCustomPrint();return false;">custom print</a> if you don't see what you need.</div>`;
+        }
+        messages.scrollTop = messages.scrollHeight;
+      }, 500);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    // Search
+    function handleSearch(val) {
+      if (!val) { renderAll(); return; }
+      const q = val.toLowerCase();
+      const matches = products.filter(p => p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+      document.getElementById("allGrid").innerHTML = "";
+      matches.forEach(p => renderProductCard(p, document.getElementById("allGrid")));
+      document.getElementById("allSection").querySelector(".section-title").textContent = "Search Results";
+      document.getElementById("allSection").style.display = "block";
+      document.getElementById("featuredSection").style.display = "none";
+      document.getElementById("animalsSection").style.display = "none";
+      document.getElementById("fidgetsSection").style.display = "none";
+    }
+
+    // Close modals
+    function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
+    // Close dropdowns on outside click
+    document.addEventListener("click", e => {
+      if (!e.target.closest(".user-menu")) document.getElementById("userDropdown").classList.remove("show");
+    });
+
+    // Init
+    renderAll();
+    updateCartBadge();
+  </script>
 </body>
 </html>
